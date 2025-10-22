@@ -14,7 +14,7 @@
       </div>
       <div class="header-center">
 
-  <h2>Grace of Christ Global Church</h2>
+  <h1>Grace of Christ Global Church</h1>
 
    </div>
       <div class="header-right">
@@ -26,7 +26,8 @@
       </div>
     </header>
 
-    <nav class="nav-bar">
+    <nav class="nav-bar" aria-label="Main">
+      <button id="menu-toggle" class="menu-toggle" aria-expanded="false" aria-controls="nav-links">☰ Menu</button>
       <div class="nav-links" id="nav-links">
     <a href="#home" class="btn">Home</a>
     <a href="#about" class="btn">About</a>
@@ -72,7 +73,7 @@
   <section id="donate" class="donate">
     <h2>Support the Ministry</h2>
     <p>Your donation helps us spread the Gospel and reach more souls for Christ.</p>
-    <a href="https://www.paypal.com/donate?business=blessingngwenyama17@gmail.com" target="_blank" class="btn">Donate via PayPal</a>
+  <a href="https://www.paypal.com/donate?business=blessingngwenyama17@gmail.com" target="_blank" rel="noopener" class="btn">Donate via PayPal</a>
   </section>
 
   <section id="contact" class="contact">
@@ -87,11 +88,17 @@
 
     <p>📍 4 Swartkops Street, North End, Port Elizabeth</p>
     <div id="map"></div>
+    <div class="map-actions">
+      <button class="btn" onclick="getDirections()">Use My Location</button>
+      <a class="btn btn-outline" href="https://www.google.com/maps/dir/?api=1&destination=-33.945,25.607" target="_blank" rel="noopener">Open in Google Maps</a>
+      <button class="btn" onclick="copyChurchCoords()">Copy GPS</button>
+    </div>
+    <div id="route-info" class="route-info" aria-live="polite"></div>
     <div class="social-links">
-      <a href="https://www.facebook.com/profile.php?id=61565114909380" target="_blank">Facebook</a>
-      <a href="https://www.facebook.com/christian.mberi.180" target="_blank">Apostle Christian Mberi</a>
-      <a href="https://youtube.com/@christianmberi?si=8zIU6DOgZcgyocPw" target="_blank">YouTube</a>
-      <a href="https://vm.tiktok.com/ZSHv2weR3P3sR-Z2rdF/" target="_blank">TikTok</a>
+  <a href="https://www.facebook.com/profile.php?id=61565114909380" target="_blank" rel="noopener">Facebook</a>
+  <a href="https://www.facebook.com/christian.mberi.180" target="_blank" rel="noopener">Apostle Christian Mberi</a>
+  <a href="https://youtube.com/@christianmberi?si=8zIU6DOgZcgyocPw" target="_blank" rel="noopener">YouTube</a>
+  <a href="https://vm.tiktok.com/ZSHv2weR3P3sR-Z2rdF/" target="_blank" rel="noopener">TikTok</a>
     </div>
   </section>
 
@@ -110,6 +117,17 @@
     window.onload = function() {
       initMap();
     }
+    // Mobile menu toggle (kept separate from initMap)
+    document.addEventListener('DOMContentLoaded', function() {
+      var toggle = document.getElementById('menu-toggle');
+      var links = document.getElementById('nav-links');
+      if (toggle && links) {
+        toggle.addEventListener('click', function() {
+          var opened = links.classList.toggle('open');
+          toggle.setAttribute('aria-expanded', opened ? 'true' : 'false');
+        });
+      }
+    });
   </script>
 
   <!-- Google Translate -->

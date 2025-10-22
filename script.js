@@ -2,18 +2,17 @@ let map;
 let userMarker;
 let directionsService;
 let directionsRenderer;
+// Single source of truth for the church coordinates
+const CHURCH_LOCATION = { lat: -33.945, lng: 25.607 };
 
 function initMap() {
-    // Church coordinates
-    const churchLocation = { lat: -33.945, lng: 25.607 };
-    
     try {
         // Initialize Google Maps services
         directionsService = new google.maps.DirectionsService();
         directionsRenderer = new google.maps.DirectionsRenderer();
         
         map = new google.maps.Map(document.getElementById("map"), {
-            center: churchLocation,
+            center: CHURCH_LOCATION,
             zoom: 15,
             mapTypeId: google.maps.MapTypeId.ROADMAP,
             mapTypeControl: true,
@@ -26,7 +25,7 @@ function initMap() {
 
         // Create church marker
         const churchMarker = new google.maps.Marker({
-            position: churchLocation,
+            position: CHURCH_LOCATION,
             map: map,
             title: "Grace of Christ Global Church",
             icon: {
@@ -40,7 +39,11 @@ function initMap() {
                 <div style="padding: 10px;">
                     <h3>Grace of Christ Global Church</h3>
                     <p>4 Swartkops Street, North End<br>Port Elizabeth, South Africa</p>
-                    <button onclick="getDirections()" style="padding: 8px; margin-top: 8px; cursor: pointer;">Get Directions</button>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+                      <button onclick="getDirections()" style="padding:8px 12px; cursor:pointer;">Use My Location</button>
+                      <a href="https://www.google.com/maps/dir/?api=1&destination=-33.945,25.607" target="_blank" style="padding:8px 12px; background:#f1c40f; color:#001f3f; text-decoration:none; border-radius:4px; font-weight:600;">Open in Google Maps</a>
+                      <button onclick="copyChurchCoords()" style="padding:8px 12px; cursor:pointer;">Copy GPS</button>
+                    </div>
                 </div>`
         });
 
@@ -58,6 +61,10 @@ function initMap() {
         // Add click event for location button
         locationButton.addEventListener("click", () => {
             if (navigator.geolocation) {
+                if (location.protocol === 'file:') {
+                    alert('To use GPS, please open this site via http://localhost or https:// (not file://).');
+                    return;
+                }
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         const userLocation = {
@@ -81,19 +88,19 @@ function initMap() {
                         });
 
                         // Calculate and display route
-                        calculateAndDisplayRoute(userLocation, churchLocation);
+                        calculateAndDisplayRoute(userLocation, CHURCH_LOCATION);
                         
                         // Fit bounds to show both markers
                         const bounds = new google.maps.LatLngBounds();
                         bounds.extend(userLocation);
-                        bounds.extend(churchLocation);
+                        bounds.extend(CHURCH_LOCATION);
                         map.fitBounds(bounds);
                     },
                     (error) => {
                         console.error("Error getting location:", error);
                         alert("Unable to get your location. Please ensure location services are enabled in your browser.");
                     }
-                );
+                , { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
             } else {
                 alert("Location services are not supported by your browser.");
             }
@@ -120,10 +127,20 @@ function calculateAndDisplayRoute(start, end) {
                 const route = response.routes[0];
                 const distance = route.legs[0].distance.text;
                 const duration = route.legs[0].duration.text;
-                alert(`Distance: ${distance}\nEstimated travel time: ${duration}`);
+                const infoEl = document.getElementById('route-info');
+                if (infoEl) {
+                    infoEl.innerHTML = `<strong>Route:</strong> ${distance} • ${duration}`;
+                } else {
+                    alert(`Distance: ${distance}\nEstimated travel time: ${duration}`);
+                }
             } else {
                 console.error("Directions request failed:", status);
-                alert("Could not calculate directions. Please try again.");
+                const infoEl = document.getElementById('route-info');
+                if (infoEl) {
+                    infoEl.textContent = "Could not calculate directions. Please try again.";
+                } else {
+                    alert("Could not calculate directions. Please try again.");
+                }
             }
         }
     );
@@ -131,23 +148,53 @@ function calculateAndDisplayRoute(start, end) {
 
 function getDirections() {
     if (navigator.geolocation) {
+        if (location.protocol === 'file:') {
+            // Fallback: open maps without current location when not in secure context
+            openGoogleMaps();
+            return;
+        }
         navigator.geolocation.getCurrentPosition(
             (position) => {
                 const userLocation = {
                     lat: position.coords.latitude,
                     lng: position.coords.longitude
                 };
-                const churchLocation = { lat: -33.945, lng: 25.607 };
-                calculateAndDisplayRoute(userLocation, churchLocation);
+                calculateAndDisplayRoute(userLocation, CHURCH_LOCATION);
             },
             () => {
-                alert("Unable to get your location. Please ensure location services are enabled.");
+                alert("Unable to get your location. Opening directions in Google Maps instead.");
+                openGoogleMaps();
             }
         );
     } else {
-        alert("Location services are not supported by your browser.");
+        alert("Location services are not supported by your browser. Opening Google Maps.");
+        openGoogleMaps();
     }
 }
+
+// Open external Google Maps with destination only (no geolocation required)
+function openGoogleMaps() {
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${CHURCH_LOCATION.lat},${CHURCH_LOCATION.lng}`;
+    window.open(url, '_blank');
+}
+
+// Copy church coordinates to clipboard
+function copyChurchCoords() {
+    const text = `${CHURCH_LOCATION.lat}, ${CHURCH_LOCATION.lng}`;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text)
+            .then(() => alert('Church GPS copied to clipboard'))
+            .catch(() => alert(text));
+    } else {
+        // Fallback
+        alert(text);
+    }
+}
+
+// Expose for InfoWindow inline handlers
+window.getDirections = getDirections;
+window.openGoogleMaps = openGoogleMaps;
+window.copyChurchCoords = copyChurchCoords;
 
 // Handle authentication failures
 window.gm_authFailure = () => {
